@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="text-center">Sit-in Records</h2>
+
+    {% if records %}
+        <table class="table table-bordered table-striped">
+            <thead class="thead-dark">
+                <tr>
+                    <th>Username</th>
+                    <th>Lab ID</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in records %}
+                <tr>
+                    <td>{{ record['username'] }}</td>
+                    <td>{{ record['lab_id'] }}</td>
+                    <td>{{ record['date'] }}</td>
+                    <td>{{ record['time'] }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p class="text-center text-muted">No sit-in records.</p>
+    {% endif %}
+    <div class="mt-4">
+        <a href="{{ url_for('') }}" class="btn btn-secondary">Go Back to Dashboard</a>
+    </div>
+</div>
+{% endblock %}

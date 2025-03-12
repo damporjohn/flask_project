@@ -1,0 +1,253 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        display: flex;
+        background: #f0f2f5;
+    }
+    .sidebar {
+        width: 250px;
+        height: 100vh;
+        position: fixed;
+        left: -250px;
+        background: #ffffff;
+        color: #050505;
+        transition: 0.3s;
+        padding-top: 20px;
+        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+    }
+    .sidebar a {
+        padding: 15px 20px;
+        display: block;
+        color: #050505;
+        text-decoration: none;
+        transition: 0.3s;
+        font-size: 14px;
+    }
+    .sidebar a:hover {
+        background: #f0f2f5;
+        border-radius: 8px;
+    }
+    .content {
+        margin-left: 0;
+        transition: 0.3s;
+        padding: 20px;
+        flex-grow: 1;
+    }
+    .menu-toggle {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        cursor: pointer;
+        background: none;
+        border: none;
+        font-size: 24px;
+        color: #343a40;
+    }
+    .table th, .table td {
+        text-align: left;
+        padding: 10px;
+    }
+    .card {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        justify-content: center;
+        align-items: center;
+    }
+    .modal-content {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        width: 500px;
+        max-width: 90%;
+    }
+    .modal-header {
+        font-size: 20px;
+        font-weight: bold;
+        margin-bottom: 15px;
+    }
+    .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 20px;
+    }
+    .btn {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    .btn-primary {
+        background: #007bff;
+        color: white;
+    }
+    .btn-secondary {
+        background: #6c757d;
+        color: white;
+    }
+    .btn-danger {
+        background: #dc3545;
+        color: white;
+    }
+</style>
+
+<button class="menu-toggle" onclick="toggleSidebar()">
+    &#9776;
+</button>
+
+<div class="sidebar" id="sidebar">
+    <a href="{{ url_for('student_dashboard') }}">Home</a>
+    <a href="{{ url_for('edit_student_record') }}">Edit</a>
+    <a href="{{ url_for('sit_in_rules') }}">Sit-in Rules</a>
+    <a href="{{ url_for('lab_rules') }}">Lab Rules & Regulations</a>
+    <a href="{{ url_for('sit_in_history') }}">Sit-in History</a>
+    <a href="{{ url_for('make_reservation') }}">Reservation</a>
+    <a href="{{ url_for('logout') }}" class="btn btn-danger mb-3">Logout</a>
+</div>
+
+<div class="content" id="content">
+    <div class="main-content">
+        <div class="card">
+            <h2 class="mb-3 text-center">Student Information</h2>
+            {% if student %}
+            <table class="table">
+                <tr><th>ID No:</th><td>{{ student.id }}</td></tr>
+                <tr><th>Username:</th><td>{{ student.username }}</td></tr>
+                <tr><th>Full Name:</th><td>{{ student.firstname }} {{ student.midname or '' }} {{ student.lastname }}</td></tr>
+                <tr><th>Course:</th><td>{{ student.course }}</td></tr>
+                <tr><th>Year Level:</th><td>{{ student.yearlevel }}</td></tr>
+                <tr><th>Email:</th><td>{{ student.email }}</td></tr>
+                <tr><th>Registration Date:</th><td>{{ student.registration_date }}</td></tr>
+                <tr><th>Remaining Sessions:</th><td>{{ student.remaining_sessions }}</td></tr>
+            </table>
+
+            <!-- Edit Button -->
+            <button class="btn btn-primary" onclick="openModal()">Edit</button>
+
+            {% else %}
+            <p class="text-center text-danger">No student data found.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Edit Student Record -->
+<div class="modal" id="editModal">
+    <div class="modal-content">
+        <div class="modal-header">Edit Student Record</div>
+        <hr>
+        {% if student %}
+        <form method="POST" action="{{ url_for('edit_student_record') }}">
+            <!-- Student ID (readonly) -->
+            <div class="mb-3">
+                <label for="id" class="form-label">Student ID</label>
+                <input type="text" class="form-control" id="student_id" name="student_id" value="{{ student.id }}" readonly>
+            </div>
+
+            <div class="row">
+                <!-- First Name -->
+                <div class="col-md-4">
+                    <label for="firstname" class="form-label">First Name</label>
+                    <input type="text" class="form-control" id="firstname" name="firstname" 
+                           value="{{ student.firstname or '' }}" required>
+                </div>
+
+                <!-- Middle Name -->
+                <div class="col-md-4">
+                    <label for="midname" class="form-label">Middle Name</label>
+                    <input type="text" class="form-control" id="midname" name="midname" 
+                           value="{{ student.midname or '' }}">
+                </div>
+
+                <!-- Last Name -->
+                <div class="col-md-4">
+                    <label for="lastname" class="form-label">Last Name</label>
+                    <input type="text" class="form-control" id="lastname" name="lastname" 
+                           value="{{ student.lastname or '' }}" required>
+                </div>
+            </div>
+
+            <!-- Email -->
+            <div class="mb-3">
+                <label for="email" class="form-label">Email</label>
+                <input type="email" class="form-control" id="email" name="email" 
+                       value="{{ student.email or '' }}" required>
+            </div>
+                        <!-- Course Dropdown -->
+                        <div class="form-group">
+                            <label for="course">Course</label>
+                            <select name="course" class="form-control" required>
+                                <option value="" disabled selected>{{ student.course }}</option>
+                                <option value="BSCS">Bachelor of Science in Computer Science (BSCS)</option>
+                                <option value="BSIT">Bachelor of Science in Information Technology (BSIT)</option>
+                                <option value="BSIS">Bachelor of Science in Information Systems (BSIS)</option>
+                                <option value="BSECE">Bachelor of Science in Electronics Engineering (BSECE)</option>
+                                <option value="BSCE">Bachelor of Science in Civil Engineering (BSCE)</option>
+                                <option value="BSEE">Bachelor of Science in Electrical Engineering (BSEE)</option>
+                                <option value="BSA">Bachelor of Science in Accountancy (BSA)</option>
+                                <option value="BSBA">Bachelor of Science in Business Administration (BSBA)</option>
+                                <option value="BSN">Bachelor of Science in Nursing (BSN)</option>
+                                <option value="BSED">Bachelor of Secondary Education (BSED)</option>
+                            </select>
+                        </div>
+
+                        <!-- Year Level Dropdown -->
+                        <div class="form-group">
+                            <label for="yearlevel">{{ student.yearlevel }}</label>
+                            <select name="yearlevel" class="form-control" required>
+                                <option value="" disabled selected>Select your year level</option>
+                                <option value="1">1st Year</option>
+                                <option value="2">2nd Year</option>
+                                <option value="3">3rd Year</option>
+                                <option value="4">4th Year</option>
+                                <option value="5">5th Year</option>
+                            </select>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Update Record</button>
+                        </div>
+        </form>
+        {% else %}
+            <p class="text-center text-danger">Student record not found.</p>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    function toggleSidebar() {
+        let sidebar = document.getElementById("sidebar");
+        let content = document.getElementById("content");
+        if (sidebar.style.left === "0px") {
+            sidebar.style.left = "-250px";
+            content.style.marginLeft = "0";
+        } else {
+            sidebar.style.left = "0px";
+            content.style.marginLeft = "250px";
+        }
+    }
+
+    function openModal() {
+        document.getElementById("editModal").style.display = "flex";
+    }
+
+    function closeModal() {
+        document.getElementById("editModal").style.display = "none";
+    }
+</script>
+{% endblock %}

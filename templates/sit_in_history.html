@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block title %}Sit-in History{% endblock %}
+
+{% block content %}
+<style>
+    body {
+        display: flex;
+        font-family: Arial, sans-serif;
+    }
+    .sidebar {
+        width: 250px;
+        height: 100vh;
+        position: fixed;
+        left: -250px;
+        background: #343a40;
+        color: white;
+        transition: left 0.3s ease-in-out;
+        padding-top: 20px;
+    }
+    .sidebar a {
+        padding: 12px 20px;
+        display: block;
+        color: white;
+        text-decoration: none;
+    }
+    .sidebar a:hover {
+        background: #495057;
+    }
+    .content {
+        margin-left: 0;
+        transition: margin-left 0.3s ease-in-out;
+        padding: 20px;
+        flex-grow: 1;
+        width: 100%;
+    }
+    .menu-toggle {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        cursor: pointer;
+        background: none;
+        border: none;
+        font-size: 24px;
+        color: #343a40;
+    }
+    .table th, .table td {
+        text-align: center;
+        padding: 12px;
+    }
+</style>
+
+<button class="menu-toggle" onclick="toggleSidebar()">
+    &#9776;
+</button>
+
+<div class="sidebar" id="sidebar">
+    <a href="{{ url_for('student_dashboard') }}">Home</a>
+    <a href="{{ url_for('edit_student_record') }}">Edit</a>
+    <a href="{{ url_for('sit_in_rules') }}">Sit-in Rules</a>
+    <a href="{{ url_for('lab_rules') }}">Lab Rules & Regulations</a>
+    <a href="{{ url_for('sit_in_history') }}">Sit-in History</a>
+    <a href="{{ url_for('make_reservation') }}">Reservation</a>
+    <a href="{{ url_for('logout') }}" class="btn btn-danger">Logout</a>
+</div>
+
+<div class="content" id="content">
+    <h1>Sit-in History</h1>
+    <p>Your past, ongoing, and upcoming sit-in sessions are listed below.</p>
+
+    <!-- Old Reservations -->
+    <h2 class="text-danger">Old Reservations</h2>
+    {% if old_reservations %}
+        <table class="table table-bordered table-hover text-center">
+            <thead class="table-dark">
+                <tr>
+                    <th>Date & Time</th>
+                    <th>Lab ID</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in old_reservations %}
+                <tr class="table-danger">
+                    <td>{{ record['datetime'] }}</td>
+                    <td>{{ record['lab_id'] }}</td>
+                    <td><span class="badge bg-danger">Completed</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p class="text-muted">No old reservations found.</p>
+    {% endif %}
+
+    <!-- Ongoing Reservations -->
+    <h2 class="text-warning">Ongoing Reservations</h2>
+    {% if ongoing_reservations %}
+        <table class="table table-bordered table-hover text-center">
+            <thead class="table-dark">
+                <tr>
+                    <th>Date & Time</th>
+                    <th>Lab ID</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in ongoing_reservations %}
+                <tr class="table-warning">
+                    <td>{{ record['datetime'] }}</td>
+                    <td>{{ record['lab_id'] }}</td>
+                    <td><span class="badge bg-warning">Ongoing</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p class="text-muted">No ongoing reservations found.</p>
+    {% endif %}
+
+    <!-- Upcoming Reservations -->
+    <h2 class="text-success">Upcoming Reservations</h2>
+    {% if upcoming_reservations %}
+        <table class="table table-bordered table-hover text-center">
+            <thead class="table-dark">
+                <tr>
+                    <th>Date & Time</th>
+                    <th>Lab ID</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in upcoming_reservations %}
+                <tr class="table-success">
+                    <td>{{ record['datetime'] }}</td>
+                    <td>{{ record['lab_id'] }}</td>
+                    <td><span class="badge bg-success">Upcoming</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p class="text-muted">No upcoming reservations found.</p>
+    {% endif %}
+</div>
+
+<script>
+    function toggleSidebar() {
+        let sidebar = document.getElementById("sidebar");
+        let content = document.getElementById("content");
+        let isOpen = sidebar.style.left === "0px";
+
+        sidebar.style.left = isOpen ? "-250px" : "0px";
+        content.style.marginLeft = isOpen ? "0" : "250px";
+    }
+</script>
+{% endblock %}

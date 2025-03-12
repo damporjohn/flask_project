@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        display: flex;
+        background: #f0f2f5;
+    }
+    .sidebar {
+        width: 250px;
+        height: 100vh;
+        position: fixed;
+        left: -250px;
+        background: #ffffff;
+        color: #050505;
+        transition: 0.3s;
+        padding-top: 20px;
+        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+    }
+    .sidebar a {
+        padding: 15px 20px;
+        display: block;
+        color: #050505;
+        text-decoration: none;
+        transition: 0.3s;
+        font-size: 14px;
+    }
+    .sidebar a:hover {
+        background: #f0f2f5;
+        border-radius: 8px;
+    }
+    .content {
+        margin-left: 0;
+        transition: 0.3s;
+        padding: 20px;
+        flex-grow: 1;
+        margin-left: 250px;
+        width: calc(100% - 250px);
+        display: flex;
+        gap: 20px;
+    }
+    .menu-toggle {
+        position: absolute;
+        top: 15px;
+        left: 15px;
+        cursor: pointer;
+        background: none;
+        border: none;
+        font-size: 24px;
+        color: #050505;
+    }
+    .table th, .table td {
+        text-align: left;
+        padding: 12px;
+        border-bottom: 1px solid #e4e6eb;
+    }
+    .card {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+    }
+    h2 {
+        color: #050505;
+        font-size: 20px;
+        margin-bottom: 15px;
+    }
+    .btn-danger {
+        background-color: #ff4444;
+        border: none;
+        border-radius: 8px;
+        padding: 10px 20px;
+        color: white;
+        font-size: 14px;
+        cursor: pointer;
+        transition: 0.3s;
+    }
+    .btn-danger:hover {
+        background-color: #cc0000;
+    }
+    .text-center {
+        text-align: center;
+    }
+    .text-danger {
+        color: #ff4444;
+    }
+    ul {
+        list-style-type: none;
+        padding: 0;
+    }
+    ul li {
+        padding: 10px 0;
+        border-bottom: 1px solid #e4e6eb;
+    }
+    ul li:last-child {
+        border-bottom: none;
+    }
+    .main-content {
+        flex: 2;
+    }
+    .right-sidebar {
+        flex: 1;
+        max-width: 300px;
+    }
+</style>
+
+<button class="menu-toggle" onclick="toggleSidebar()">&#9776;</button>
+
+<div class="sidebar" id="sidebar">
+    <a href="{{ url_for('student_dashboard') }}">Home</a>
+    <a href="{{ url_for('edit_student_record') }}">Edit</a>
+    <a href="{{ url_for('sit_in_rules') }}">Sit-in Rules</a>
+    <a href="{{ url_for('lab_rules') }}">Lab Rules & Regulations</a>
+    <a href="{{ url_for('sit_in_history') }}">Sit-in History</a>
+    <a href="{{ url_for('make_reservation') }}">Reservation</a>
+    <a href="{{ url_for('logout') }}" class="btn btn-danger mt-3">Logout</a>
+</div>
+
+<div class="content" id="content">
+    <!-- Main Content (Left Side) -->
+    <div class="main-content">
+        <div class="card">
+            <h2 class="mb-3 text-center">Student Information</h2>
+            {% if student %}
+            <table class="table">
+                <tr><th>ID No:</th><td>{{ student.id }}</td></tr>
+                <tr><th>Username:</th><td>{{ student.username }}</td></tr>
+                <tr><th>Full Name:</th><td>{{ student.firstname }} {{ student.midname or '' }} {{ student.lastname }}</td></tr>
+                <tr><th>Course:</th><td>{{ student.course }}</td></tr>
+                <tr><th>Year Level:</th><td>{{ student.yearlevel }}</td></tr>
+                <tr><th>Email:</th><td>{{ student.email }}</td></tr>
+                <tr><th>Registration Date:</th><td>{{ student.registration_date }}</td></tr>
+                <tr><th>Remaining Sessions:</th><td>{{ student.remaining_sessions }}</td></tr>
+            </table>
+            {% else %}
+            <p class="text-center text-danger">No student data found.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Right Sidebar (Announcements and Remaining Sessions) -->
+    <div class="right-sidebar">
+        <div class="card">
+            <h2>Announcements</h2>
+            <ul>
+                <li>New schedule updates for sit-in sessions.</li>
+                <li>Maintenance notice: The lab will be closed on [date].</li>
+                <li>Upcoming events and activities.</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h2>Remaining Sessions</h2>
+            <p>Your remaining sit-in sessions: {{ student.remaining_sessions }}</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    function toggleSidebar() {
+        let sidebar = document.getElementById("sidebar");
+        if (sidebar.style.left === "0px") {
+            sidebar.style.left = "-250px";
+        } else {
+            sidebar.style.left = "0px";
+        }
+    }
+</script>
+{% endblock %}

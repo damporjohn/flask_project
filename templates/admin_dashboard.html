@@ -1,0 +1,376 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<style>
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
+    html, body {
+        font-family: Arial, sans-serif;
+        width: 100%;
+        height: 100%;
+        background: #f8f9fa;
+        display: flex;
+        flex-direction: column;
+    }
+    .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        background: #343a40;
+        color: white;
+        padding: 10px 5%;
+        font-weight: bold;
+        flex-shrink: 0;
+    }
+    .nav-links {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+    .nav-links a {
+        color: white;
+        text-decoration: none;
+        padding: 10px 15px;
+        background: #495057;
+        border-radius: 5px;
+        transition: 0.3s;
+        cursor: pointer;
+    }
+    .nav-links a:hover {
+        background: #6c757d;
+    }
+    .content {
+        flex-grow: 1;
+        padding: 20px;
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+</style>
+
+<!-- Header -->
+<div class="header">
+    Admin Dashboard
+    <div class="nav-links">
+        <a data-bs-toggle="modal" data-bs-target="#homeModal">Home</a>
+        <a data-bs-toggle="modal" data-bs-target="#searchModal">Search</a>
+        <a data-bs-toggle="modal" data-bs-target="#sitInModal">Sit-in</a>
+        <a data-bs-toggle="modal" data-bs-target="#viewSitInRecordsModal">View Sit-in Records</a>
+        <a data-bs-toggle="modal" data-bs-target="#feedbackReportsModal">Feedback Reports</a>
+        <a data-bs-toggle="modal" data-bs-target="#reservationModal">Reservation</a>
+        <a data-bs-toggle="modal" data-bs-target="#sitInReportsModal">Sit-in Reports</a>
+    </div>
+    <a href="{{ url_for('logout') }}" class="btn btn-danger">Logout</a>
+</div>
+
+<!-- Modals for Navigation Links -->
+<div class="modals">
+    <!-- Home Modal -->
+    <div class="modal fade" id="homeModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Home</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    Welcome to the Admin Dashboard!
+                </div>
+            </div>
+        </div>
+    </div>
+
+<!-- Search Modal -->
+<div class="modal fade" id="searchModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Search Student</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="input-group">
+                    <input type="text" id="searchInput" class="form-control" placeholder="Search..." oninput="searchStudent()">
+                    <button class="btn btn-primary" onclick="searchStudent()">Search</button>
+                </div>
+                <ul id="searchResults" class="list-group mt-2"></ul> <!-- Search results here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sit-in Modal -->
+<div class="modal fade" id="sitInModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Sit In Form</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="sitInForm">
+                    <div class="mb-3">
+                        <label for="sitInID" class="form-label">ID Number:</label>
+                        <input type="text" id="sitInID" class="form-control" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="sitInName" class="form-label">Student Name:</label>
+                        <input type="text" id="sitInName" class="form-control" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="sitInEmail" class="form-label">Email:</label>
+                        <input type="text" id="sitInEmail" class="form-control" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="sitInPurpose" class="form-label">Purpose:</label>
+                        <input type="text" id="sitInPurpose" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="sitInLab" class="form-label">Lab:</label>
+                        <select id="sitInLab" class="form-select" required>
+                            <option value="" disabled selected>Select a lab</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="sitInSession" class="form-label">Remaining Sessions:</label>
+                        <input type="number" id="sitInSession" class="form-control" required>
+                    </div>
+                    <div class="d-flex justify-content-end">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary ms-2">Sit In</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <!-- View Sit-in Records Modal -->
+    <div class="modal fade" id="viewSitInRecordsModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">View Sit-in Records</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    Records will be displayed here.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Feedback Reports Modal -->
+    <div class="modal fade" id="feedbackReportsModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Feedback Reports</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    Feedback reports will be available soon.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reservation Modal -->
+    <div class="modal fade" id="reservationModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Reservation</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    Reservation system will be added soon.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sit-in Reports Modal -->
+    <div class="modal fade" id="sitInReportsModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Sit-in Reports</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    Sit-in reports will be displayed here.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap Script -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// Function to search for students
+function searchStudent() {
+    const searchInput = document.getElementById('searchInput').value.trim();
+    const searchResults = document.getElementById('searchResults');
+
+    // Clear previous results
+    searchResults.innerHTML = '';
+
+    if (!searchInput) {
+        searchResults.innerHTML = '<li class="list-group-item text-muted">Enter a name or ID to search.</li>';
+        return;
+    }
+
+    // Fetch students from the server
+    fetch(`/get_students?search_query=${encodeURIComponent(searchInput)}`)
+        .then(response => response.json())
+        .then(data => {
+            if (!data.students || data.students.length === 0) {
+                searchResults.innerHTML = '<li class="list-group-item text-danger">No students found.</li>';
+            } else {
+                // Display search results
+                data.students.forEach(student => {
+                    const listItem = document.createElement('li');
+                    listItem.className = 'list-group-item list-group-item-action';
+                    listItem.textContent = `${student.firstname} ${student.lastname} (ID: ${student.id})`;
+                    listItem.onclick = () => populateSitInForm(student);
+                    searchResults.appendChild(listItem);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching students:', error);
+            searchResults.innerHTML = '<li class="list-group-item text-danger">An error occurred while searching.</li>';
+        });
+}
+
+// Function to populate the sit-in form with student data
+function populateSitInForm(student) {
+    document.getElementById('sitInID').value = student.idno;
+    document.getElementById('sitInName').value = `${student.firstname} ${student.midname} ${student.lastname}`;
+    document.getElementById('sitInEmail').value = student.email;
+
+    // Show the sit-in modal
+    const sitInModal = new bootstrap.Modal(document.getElementById('sitInModal'));
+    sitInModal.show();
+}
+
+// Function to handle sit-in form submission
+document.getElementById('sitInForm').addEventListener('submit', function (event) {
+    event.preventDefault();
+
+    const formData = {
+        idno: document.getElementById('sitInID').value,
+        purpose: document.getElementById('sitInPurpose').value,
+        lab: document.getElementById('sitInLab').value,
+        remaining_sessions: document.getElementById('sitInSession').value,
+    };
+
+    // Submit the form data to the server
+    fetch('/sit_in_form', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Sit-in record saved successfully!');
+                // Close the modal
+                const sitInModal = bootstrap.Modal.getInstance(document.getElementById('sitInModal'));
+                sitInModal.hide();
+            } else {
+                alert('Failed to save sit-in record.');
+            }
+        })
+        .catch(error => {
+            console.error('Error submitting sit-in form:', error);
+            alert('An error occurred while submitting the form.');
+        });
+});
+
+// Function to fetch labs and populate the dropdown
+function fetchLabs() {
+    fetch('/get_labs')
+        .then(response => response.json())
+        .then(data => {
+            const labDropdown = document.getElementById('sitInLab');
+            labDropdown.innerHTML = '<option value="" disabled selected>Select a lab</option>'; // Reset dropdown
+
+            if (data.labs.length === 0) {
+                labDropdown.innerHTML = '<option value="" disabled>No labs available</option>';
+            } else {
+                data.labs.forEach(lab => {
+                    const option = document.createElement('option');
+                    option.value = lab.id; // Use lab ID as the value
+                    option.textContent = `Lab ${lab.number} (Capacity: ${lab.capacity}, Status: ${lab.status})`;
+                    labDropdown.appendChild(option);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching labs:', error);
+            alert('An error occurred while fetching labs.');
+        });
+}
+
+// Fetch labs when the modal is shown
+document.getElementById('sitInModal').addEventListener('show.bs.modal', fetchLabs);
+
+// Function to populate the sit-in form with student data
+function populateSitInForm(student) {
+    document.getElementById('sitInID').value = student.idno;
+    document.getElementById('sitInName').value = `${student.firstname} ${student.midname} ${student.lastname}`;
+    document.getElementById('sitInEmail').value = student.email;
+
+    // Show the sit-in modal
+    const sitInModal = new bootstrap.Modal(document.getElementById('sitInModal'));
+    sitInModal.show();
+}
+
+// Function to handle sit-in form submission
+document.getElementById('sitInForm').addEventListener('submit', function (event) {
+    event.preventDefault();
+
+    const formData = {
+        idno: document.getElementById('sitInID').value,
+        purpose: document.getElementById('sitInPurpose').value,
+        lab: document.getElementById('sitInLab').value,
+        remaining_sessions: document.getElementById('sitInSession').value,
+    };
+
+    // Submit the form data to the server
+    fetch('/sit_in_form', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Sit-in record saved successfully!');
+                // Close the modal
+                const sitInModal = bootstrap.Modal.getInstance(document.getElementById('sitInModal'));
+                sitInModal.hide();
+            } else {
+                alert('Failed to save sit-in record: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error submitting sit-in form:', error);
+            alert('An error occurred while submitting the form.');
+        });
+});
+</script>
+{% endblock %}

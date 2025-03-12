@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}Sit-in Rules{% endblock %}
+
+{% block content %}
+<style>
+    body {
+        display: flex;
+    }
+    .sidebar {
+        width: 250px;
+        height: 100vh;
+        position: fixed;
+        left: -250px;
+        background: #343a40;
+        color: white;
+        transition: 0.3s;
+        padding-top: 20px;
+    }
+    .sidebar a {
+        padding: 10px 20px;
+        display: block;
+        color: white;
+        text-decoration: none;
+    }
+    .sidebar a:hover {
+        background: #495057;
+    }
+    .content {
+        margin-left: 0;
+        transition: 0.3s;
+        padding: 20px;
+        flex-grow: 1;
+    }
+    .menu-toggle {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        cursor: pointer;
+        background: none;
+        border: none;
+        font-size: 24px;
+        color: #343a40;
+    }
+    .table th, .table td {
+        text-align: left;
+        padding: 10px;
+    }
+</style>
+
+<button class="menu-toggle" onclick="toggleSidebar()">
+    &#9776;
+</button>
+
+<div class="sidebar" id="sidebar">
+    <a href="{{ url_for('student_dashboard') }}">Home</a>
+    <a href="{{ url_for('edit_student_record') }}">Edit</a>
+    <a href="{{ url_for('sit_in_rules') }}">Sit-in Rules</a>
+    <a href="{{ url_for('lab_rules') }}">Lab Rules & Regulations</a>
+    <a href="{{ url_for('sit_in_history') }}">Sit-in History</a>
+    <a href="{{ url_for('make_reservation') }}">Reservation</a>
+    <a href="{{ url_for('logout') }}" class="btn btn-danger mb-3">Logout</a>
+</div>
+
+<div class="content" id="content">
+    <h1>Sit-in Rules</h1>
+    <ol>
+        <li>Students must register before attending a sit-in session.</li>
+        <li>Respect the lab environment and other students.</li>
+        <li>No food or drinks allowed inside the lab.</li>
+        <li>Attendance must be verified before leaving.</li>
+    </ol>
+</div>
+
+<script>
+    function toggleSidebar() {
+        let sidebar = document.getElementById("sidebar");
+        let content = document.getElementById("content");
+        if (sidebar.style.left === "0px") {
+            sidebar.style.left = "-250px";
+            content.style.marginLeft = "0";
+        } else {
+            sidebar.style.left = "0px";
+            content.style.marginLeft = "250px";
+        }
+    }
+</script>
+{% endblock %}

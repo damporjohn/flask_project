@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    body {
+        display: flex;
+        transition: margin-left 0.3s;
+    }
+    .sidebar {
+        width: 250px;
+        height: 100vh;
+        position: fixed;
+        left: -250px;
+        background: #343a40;
+        color: white;
+        transition: 0.3s;
+        padding-top: 20px;
+        z-index: 1000;
+    }
+    .sidebar a {
+        padding: 10px 20px;
+        display: block;
+        color: white;
+        text-decoration: none;
+    }
+    .sidebar a:hover {
+        background: #495057;
+    }
+    .content {
+        margin-left: 0;
+        transition: 0.3s;
+        width: 100%;
+        padding: 20px;
+    }
+    .menu-toggle {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        cursor: pointer;
+        background: none;
+        border: none;
+        font-size: 24px;
+        color: #343a40;
+        z-index: 1100;
+    }
+
+    /* Adjust content when sidebar is open */
+    .sidebar-open {
+        margin-left: 250px;
+        width: calc(100% - 250px);
+    }
+</style>
+
+<button class="menu-toggle" onclick="toggleSidebar()">
+    &#9776;
+</button>
+
+<div class="sidebar" id="sidebar">
+    <a href="{{ url_for('student_dashboard') }}">Home</a>
+    <a href="{{ url_for('edit_student_record') }}">Edit</a>
+    <a href="{{ url_for('sit_in_rules') }}">Sit-in Rules</a>
+    <a href="{{ url_for('lab_rules') }}">Lab Rules & Regulations</a>
+    <a href="{{ url_for('sit_in_history') }}">Sit-in History</a>
+    <a href="{{ url_for('make_reservation') }}">Reservation</a>
+    <a href="{{ url_for('logout') }}" class="btn btn-danger mb-3">Logout</a>
+</div>
+
+<div class="content" id="content">
+    <div class="container mt-4">
+        <div class="card shadow-sm p-4">
+            <h2 class="mb-3 text-center">Make a Reservation</h2>
+
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form method="POST" action="{{ url_for('make_reservation') }}">
+                <!-- Lab Selection -->
+                <div class="mb-3">
+                    <label for="lab" class="form-label">Select Lab</label>
+                    <select class="form-control" id="lab_id" name="lab" required>
+                        <option value="">-- Choose Lab --</option>
+                        {% for lab in labs %}
+                            <option value="{{ lab['id'] }}">{{ lab['roomNumber'] }} (Capacity: {{ lab['capacity'] }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Date Selection -->
+                <div class="mb-3">
+                    <label for="date" class="form-label">Select Date</label>
+                    <input type="date" class="form-control" id="date" name="date" required>
+                </div>
+
+                <!-- Time Selection -->
+                <div class="mb-3">
+                    <label for="time" class="form-label">Select Time</label>
+                    <input type="time" class="form-control" id="time" name="time" required>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="d-flex justify-content-between">
+                    <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#compLabModal">View Labs</button>
+                    <button type="submit" class="btn btn-primary">Reserve</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Computer Labs Status Modal -->
+<div class="modal fade" id="compLabModal" tabindex="-1" aria-labelledby="compLabModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="compLabModalLabel">Computer Laboratories Status</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Lab Number</th>
+                            <th>Status</th>
+                            <th>Capacity</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for lab in labs %}
+                        <tr>
+                            <td>{{ lab['roomNumber'] }}</td>
+                            <td>{{ lab['status'] }}</td>
+                            <td>{{ lab['capacity'] }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        let today = new Date().toISOString().split("T")[0];
+        document.getElementById("date").setAttribute("min", today);
+    });
+
+    function toggleSidebar() {
+        let sidebar = document.getElementById("sidebar");
+        let content = document.getElementById("content");
+        if (sidebar.style.left === "0px") {
+            sidebar.style.left = "-250px";
+            content.classList.remove("sidebar-open");
+        } else {
+            sidebar.style.left = "0px";
+            content.classList.add("sidebar-open");
+        }
+    }
+</script>
+{% endblock %}
