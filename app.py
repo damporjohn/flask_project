@@ -1,5 +1,5 @@
 import mysql.connector
-from flask import Flask, request, redirect, url_for, session, render_template, flash, jsonify
+from flask import Flask, request, redirect, url_for, session, render_template, flash, jsonify, logging
 from werkzeug.security import check_password_hash, generate_password_hash
 from datetime import datetime, date
 registration_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -128,7 +128,7 @@ def register(role):
             if role == "student":
                 course = request.form.get('course', '')
                 yearlevel = request.form.get('yearlevel', '')
-                remaining_sessions = 5  # Students start with 5 sessions
+                remaining_sessions = 30  # Students start with 30 sessions
                 
                 query = f'''
                     INSERT INTO {table_name} 
@@ -187,8 +187,8 @@ def admin_dashboard():
         conn = mysql.connector.connect(**DB_CONFIG)
         cursor = conn.cursor(dictionary=True)
 
-        # Fetch students
-        cursor.execute("SELECT id, username, firstname, midname, lastname, email, registration_date FROM students")
+        # Fetch students along with remaining_sessions
+        cursor.execute("SELECT id, username, firstname, midname, lastname, email, registration_date, remaining_sessions FROM students")
         students = cursor.fetchall()
 
     except mysql.connector.Error as e:
@@ -201,6 +201,7 @@ def admin_dashboard():
 
     return render_template('admin_dashboard.html', students=students)
 
+
 @app.route('/get_students', methods=['GET'])
 def get_students():
     """Fetch students from MySQL, with optional search query support."""
@@ -209,23 +210,15 @@ def get_students():
     students = []
 
     try:
-        # Connect to MySQL
-        conn = mysql.connector.connect(
-            host="localhost",
-            user="root",
-            password="",
-            database="SYSARCH"
-        )
+        conn = mysql.connector.connect(**DB_CONFIG)
         cursor = conn.cursor(dictionary=True)
 
-        # Base SQL query
         query = """
             SELECT id, username, firstname, midname, lastname, email, registration_date
             FROM students
         """
         params = []
 
-        # Apply search filter if needed
         if search_query:
             query += """
                 WHERE id LIKE %s OR username LIKE %s OR firstname LIKE %s
@@ -246,6 +239,184 @@ def get_students():
         conn.close()
 
     return jsonify({'students': students})
+
+
+
+
+
+@app.route('/submit_sit_in_form', methods=['GET', 'POST'])
+def submit_sit_in_form():
+    if 'student_id' not in session:
+        return redirect(url_for('login_dashboard'))
+    
+    student_id = session['student_id']
+    student_full_name = session.get('student_full_name', '')
+
+    try:
+        conn = mysql.connector.connect(**DB_CONFIG)
+        cursor = conn.cursor(dictionary=True)
+
+        # Fetch programming languages
+        programming_languages = [
+            "Python", "Java", "C++", "JavaScript", "PHP", "Ruby", "Swift", "Go", "Kotlin"
+        ]
+
+        # Fetch available labs (Ensuring roomNumber is correct)
+        cursor.execute("SELECT roomNumber FROM labs")  
+        labs = cursor.fetchall()
+
+        # Fetch remaining sessions for the student
+        cursor.execute("SELECT remaining_sessions FROM students WHERE id = %s", (student_id,))
+        student_data = cursor.fetchone()
+
+        remaining_sessions = student_data["remaining_sessions"] if student_data else 0
+
+        if request.method == 'POST':
+            purpose = request.form.get('purpose')
+            room_number = request.form.get('roomNumber')
+
+            if remaining_sessions <= 0:
+                return jsonify({'error': 'No remaining sessions available.'}), 400
+
+            # Insert into reservations table
+            cursor.execute("""
+                INSERT INTO reservations (student_id, student_name, purpose, roomNumber, remaining_sessions)
+                VALUES (%s, %s, %s, %s, %s)
+            """, (student_id, student_full_name, purpose, room_number, remaining_sessions - 1))
+
+            # Update the student's remaining sessions
+            cursor.execute("""
+                UPDATE students SET remaining_sessions = remaining_sessions - 1 WHERE id = %s
+            """, (student_id,))
+
+            conn.commit()
+
+            return jsonify({'success': 'Sit-in form submitted successfully.'})
+
+    except mysql.connector.Error as e:
+        print(f"Database error: {e}")
+        return jsonify({'error': 'An error occurred while submitting the form.'}), 500
+
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if 'conn' in locals():
+            conn.close()
+
+    return render_template(
+        'admin_dashboard.html',
+        student_full_name=student_full_name,
+        programming_languages=programming_languages,
+        labs=labs,
+        remaining_sessions=remaining_sessions
+    )
+
+@app.route('/get_labs', methods=['GET'])
+def get_labs():
+    try:
+        conn = mysql.connector.connect(**DB_CONFIG)
+        cursor = conn.cursor(dictionary=True)
+
+        # Fetch available labs where status is "Available"
+        cursor.execute("SELECT roomNumber FROM labs WHERE status = 'Available'")
+        labs = cursor.fetchall()
+
+        return jsonify({'labs': labs})
+
+    except mysql.connector.Error as e:
+        print(f"Database error: {e}")
+        return jsonify({'error': 'Failed to fetch labs'}), 500
+
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if 'conn' in locals():
+            conn.close()
+
+@app.route('/update_all_remaining_sessions', methods=['POST'])
+def update_all_remaining_sessions():
+    try:
+        conn = mysql.connector.connect(**DB_CONFIG)
+        cursor = conn.cursor()
+
+        # Update remaining_sessions for all students
+        cursor.execute("UPDATE students SET remaining_sessions = 25")
+        conn.commit()
+
+        return jsonify({'success': 'Remaining sessions updated to 25 for all students'})
+
+    except mysql.connector.Error as e:
+        print(f"Database error: {e}")
+        return jsonify({'error': 'Database error'}), 500
+
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if 'conn' in locals():
+            conn.close()
+
+@app.route('/submit_sit_in_form_mysql', methods=['POST'])
+def submit_sit_in_form_mysql():
+    if 'student_id' not in session:
+        return redirect(url_for('login_dashboard'))
+
+    student_id = session['student_id']
+    student_full_name = session.get('student_full_name', '')
+
+    try:
+        conn = mysql.connector.connect(**DB_CONFIG)
+        cursor = conn.cursor(dictionary=True)
+
+        purpose = request.form.get('purpose')
+        room_number = request.form.get('roomNumber')
+
+        # Fetch the remaining sessions of the student
+        cursor.execute("SELECT remaining_sessions FROM students WHERE id = %s", (student_id,))
+        student_data = cursor.fetchone()
+
+        if not student_data:
+            return jsonify({'error': 'Student not found.'}), 400
+
+        remaining_sessions = student_data["remaining_sessions"]
+
+        if remaining_sessions <= 0:
+            return jsonify({'error': 'No remaining sessions available.'}), 400
+
+        # Insert the new sit-in record into the sitin table
+        cursor.execute("""
+            INSERT INTO sitin (student_id, student_name, purpose, room_number, remaining_sessions)
+            VALUES (%s, %s, %s, %s, %s)
+        """, (student_id, student_full_name, purpose, room_number, remaining_sessions - 1))
+
+        # Deduct 1 from the student's remaining sessions
+        cursor.execute("""
+            UPDATE students SET remaining_sessions = remaining_sessions - 1 WHERE id = %s
+        """, (student_id,))
+
+        conn.commit()
+
+        return jsonify({'success': 'Sit-in form submitted successfully. Session deducted.'})
+
+    except mysql.connector.Error as e:
+        print(f"Database error: {e}")
+        return jsonify({'error': 'An error occurred while submitting the form.'}), 500
+
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if 'conn' in locals():
+            conn.close()
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -440,7 +611,6 @@ def sit_in_history():
         "ongoing_reservations": ongoing_reservations,
         "upcoming_reservations": upcoming_reservations
     })
-
 
 @app.route('/make_reservation', methods=['GET', 'POST'])
 def make_reservation():
